@@ -1,0 +1,30 @@
+{
+  "parent": "lootworks:loot_probe/root",
+  "display": {
+    "icon": {
+      "id": "lootworks:treasure_core"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.treasure_core.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.treasure_core.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_treasure_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "lootworks:treasure_core"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "parent": "lootworks:loot_probe/fate_crystal",
+  "display": {
+    "icon": {
+      "id": "lootworks:uncharged_destined_crystal"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.uncharged_destined_crystal.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.uncharged_destined_crystal.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_uncharged_destined_crystal": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "lootworks:uncharged_destined_crystal"
+          }
+        ]
+      }
+    }
+  }
+}

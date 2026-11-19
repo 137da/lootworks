@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.lootworks.mixin",
+  "plugin": "com.example.lootworks.mixin.LootWorksMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ExplorationMapFunctionMixin",
+    "BlockEntityContainerMixin",
+    "CompoundContainerAccess",
+    "LootTableFillMixin",
+    "lootr.DefaultLootFillerMixin",
+    "lootr.LootrInventoryMixin"
+  ],
+  "client": [
+    "ModListNameMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

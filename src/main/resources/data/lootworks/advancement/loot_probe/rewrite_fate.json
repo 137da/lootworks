@@ -1,0 +1,23 @@
+{
+  "parent": "lootworks:loot_probe/chest_detector",
+  "display": {
+    "icon": {
+      "id": "lootworks:chest_detector"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.rewrite_fate.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.rewrite_fate.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "rewrite_fate": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

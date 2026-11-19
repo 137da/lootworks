@@ -1,0 +1,23 @@
+{
+  "parent": "lootworks:loot_probe/destined_crystal",
+  "display": {
+    "icon": {
+      "id": "lootworks:destined_crystal"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.anchor_fate.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.anchor_fate.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "anchor_fate": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

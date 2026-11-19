@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ACA", "AEA", "CAC"],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "C": { "item": "lootworks:fate_crystal" },
+    "E": { "item": "minecraft:echo_shard" }
+  },
+  "result": { "id": "lootworks:uncharged_destined_crystal", "count": 1 }
+}

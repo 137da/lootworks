@@ -1,0 +1,7 @@
+{
+  "type": "lootworks:test_add_item",
+  "conditions": [],
+  "item": "lootworks:lucky_dust",
+  "chance": 0.01,
+  "table_path_prefix": "chests/"
+}

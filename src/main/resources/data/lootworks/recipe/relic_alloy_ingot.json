@@ -1,0 +1,39 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:false"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "lootworks:relic_metal_ingot"
+    },
+    {
+      "item": "lootworks:relic_metal_ingot"
+    },
+    {
+      "item": "lootworks:relic_metal_ingot"
+    },
+    {
+      "item": "lootworks:relic_metal_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:iron_ingot"
+    }
+  ],
+  "result": {
+    "id": "lootworks:relic_alloy_ingot",
+    "count": 1
+  }
+}

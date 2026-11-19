@@ -1,0 +1,30 @@
+{
+  "parent": "lootworks:loot_probe/treasure_core",
+  "display": {
+    "icon": {
+      "id": "lootworks:lucky_dust"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.fate_dust.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.fate_dust.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_fate_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "lootworks:lucky_dust"
+          }
+        ]
+      }
+    }
+  }
+}
