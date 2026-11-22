@@ -1,0 +1,36 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_treasure_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "lootworks:treasure_core"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_treasure_core"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "lootworks:chest_detector",
+      "lootworks:fate_crystal",
+      "lootworks:lucky_dust_1",
+      "lootworks:lucky_dust_2",
+      "lootworks:lucky_dust_3",
+      "lootworks:lucky_dust_4",
+      "lootworks:lucky_dust_5",
+      "lootworks:lucky_dust_6",
+      "lootworks:lucky_dust_7",
+      "lootworks:lucky_dust_8"
+    ]
+  }
+}

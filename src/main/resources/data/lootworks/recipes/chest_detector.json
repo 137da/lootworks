@@ -1,0 +1,21 @@
+{
+  "type": "lootworks:core_consuming_shaped",
+  "category": "misc",
+  "pattern": [
+    " MM",
+    " TM",
+    "M  "
+  ],
+  "key": {
+    "M": {
+      "item": "lootworks:relic_metal_ingot"
+    },
+    "T": {
+      "item": "lootworks:treasure_core"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "lootworks:chest_detector"
+  }
+}

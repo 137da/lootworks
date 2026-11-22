@@ -1,0 +1,32 @@
+{
+  "parent": "lootworks:loot_probe/relic_metal_ingot",
+  "display": {
+    "icon": {
+      "item": "lootworks:chest_detector"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.chest_detector.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.chest_detector.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_chest_detector": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "lootworks:chest_detector"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

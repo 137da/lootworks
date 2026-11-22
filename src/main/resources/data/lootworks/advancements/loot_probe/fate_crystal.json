@@ -1,0 +1,30 @@
+{
+  "parent": "lootworks:loot_probe/fate_dust",
+  "display": {
+    "icon": {
+      "item": "lootworks:fate_crystal"
+    },
+    "title": {
+      "translate": "advancement.lootworks.loot_probe.fate_crystal.title"
+    },
+    "description": {
+      "translate": "advancement.lootworks.loot_probe.fate_crystal.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_fate_crystal": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["lootworks:fate_crystal"]
+          }
+        ]
+      }
+    }
+  }
+}

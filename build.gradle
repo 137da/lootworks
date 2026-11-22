@@ -1,0 +1,107 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '6.0.54'
+    id 'org.spongepowered.mixin' version '0.7.+'
+}
+
+group = 'com.example.lootworks'
+version = mod_version
+
+base {
+    archivesName = 'lootworks-forge'
+}
+
+def serverRun = gradle.startParameter.taskNames.any { task ->
+    task.tokenize(':').last() in ['runServer', 'runGameTestServer']
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    mappings channel: 'official', version: minecraft_version
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            // 开发环境用官方方法名，第三方模组的 Mixin 引用仍采用发行版名称。
+            args '-mixin.config=lootworks.mixins.json'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', layout.buildDirectory.file('createSrgToMcp/output.srg').get().asFile.absolutePath
+
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+        }
+        server {
+            args '--nogui'
+        }
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            workingDirectory project.file('run-gametest')
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // 兼容模组仅用于开发运行。-Pno_lootr 可验证纯原版奖励箱。
+    runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")
+    compileOnly fg.deobf("maven.modrinth:jei:${jei_version}")
+    runtimeOnly fg.deobf("maven.modrinth:jei:${jei_version}")
+    compileOnly fg.deobf("maven.modrinth:lootr:${lootr_version}")
+    if (!providers.gradleProperty('no_lootr').isPresent()) {
+        runtimeOnly fg.deobf("maven.modrinth:lootr:${lootr_version}")
+    }
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+mixin {
+    add sourceSets.main, 'lootworks.refmap.json'
+    config 'lootworks.mixins.json'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def modProperties = [
+        mod_id: mod_id,
+        mod_name: mod_name,
+        mod_version: mod_version,
+        minecraft_version: minecraft_version,
+        forge_version: forge_version
+    ]
+
+    filteringCharset = 'UTF-8'
+    inputs.properties modProperties
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand modProperties
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    from 'LICENSE'
+    manifest.attributes('MixinConfigs': 'lootworks.mixins.json')
+    // 测试用战利品表与 GLM 不进入游戏发行包。
+    exclude 'data/forge/loot_modifiers/global_loot_modifiers.json'
+    exclude 'data/lootworks/loot_modifiers/test_add_item.json'
+    exclude 'data/lootworks/loot_tables/chests/messy_*.json'
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "lootworks:lucky_dust",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "lootworks:treasure_core"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "item": "lootworks:lucky_dust"
+  }
+}

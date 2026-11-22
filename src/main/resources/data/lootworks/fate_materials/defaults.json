@@ -1,0 +1,19 @@
+{
+  "values": {
+    "lootworks:lucky_dust": {
+      "curve": "common_recovery",
+      "strength": 1.0,
+      "max_count": 8
+    },
+    "lootworks:fate_crystal": {
+      "curve": "rare_recovery",
+      "strength": 1.0,
+      "max_count": 3
+    },
+    "lootworks:destined_crystal": {
+      "curve": "guarantee",
+      "strength": 1.0,
+      "max_count": 1
+    }
+  }
+}
