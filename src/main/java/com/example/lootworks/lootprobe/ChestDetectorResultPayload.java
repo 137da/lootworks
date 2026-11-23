@@ -9,6 +9,7 @@ import com.example.lootworks.LootWorks;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,6 +22,24 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public record ChestDetectorResultPayload(int containerId, int runs, List<Drop> drops, int unobserved)
         implements CustomPacketPayload {
     public record Drop(Item item, int hits, double chance, boolean potionGroup) {}
+
+    /** 深度搜索进度；target 为 0 表示已结束（或被拒绝），客户端清掉进度显示。 */
+    public record DeepSearchProgress(int containerId, int runs, int target) implements CustomPacketPayload {
+        private static final Type<DeepSearchProgress> TYPE =
+                new Type<>(ResourceLocation.fromNamespaceAndPath(LootWorks.MODID, "deep_search_progress"));
+        private static final StreamCodec<FriendlyByteBuf, DeepSearchProgress> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, DeepSearchProgress::containerId,
+                ByteBufCodecs.VAR_INT, DeepSearchProgress::runs,
+                ByteBufCodecs.VAR_INT, DeepSearchProgress::target,
+                DeepSearchProgress::new);
+
+        @Override
+        public Type<DeepSearchProgress> type() {
+            return TYPE;
+        }
+    }
+
+    private static final String PROTOCOL = "4"; // 4：新增深度搜索进度包
 
     private static final Type<ChestDetectorResultPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(LootWorks.MODID, "chest_detector_result"));
@@ -42,8 +61,12 @@ public record ChestDetectorResultPayload(int containerId, int runs, List<Drop> d
 
     /** 注册从服务端下发的结果，处理时只更新对应的菜单实例。 */
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar("3").playToClient(TYPE, STREAM_CODEC, (payload, context) -> {
+        var registrar = event.registrar(PROTOCOL);
+        registrar.playToClient(TYPE, STREAM_CODEC, (payload, context) -> {
             if (context.player().containerMenu instanceof ChestDetectorMenu menu) menu.receive(payload);
+        });
+        registrar.playToClient(DeepSearchProgress.TYPE, DeepSearchProgress.STREAM_CODEC, (payload, context) -> {
+            if (context.player().containerMenu instanceof ChestDetectorMenu menu) menu.receiveProgress(payload);
         });
     }
 

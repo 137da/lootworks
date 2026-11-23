@@ -54,6 +54,8 @@ public final class LootIndex {
     private static final long TICK_BUDGET_NANOS = 2_000_000; // 单 tick 的索引时间预算，检查点在每次模拟之间
     private static final long SLOW_STEP_NANOS = 50_000_000;  // 单步超过 50 ms（一整个 tick）就写日志
     private static final int CHUNK_SCANS_PER_TICK = 128;     // 每 tick 最多扫描的已加载区块数
+    public static final int DEEP_STEP_RUNS = 10_000;         // 深度搜索每次追加的采样次数
+    public static final int DEEP_MAX_RUNS = 100_000;         // 单张表深度搜索的采样上限
 
     @Nullable
     private static LootIndex active; // 单人存档切换和数据包重载都会丢弃当前实例
@@ -71,7 +73,15 @@ public final class LootIndex {
     public record Drop(ResourceLocation itemId, int hits, double chance, boolean potionGroup) {}
 
     /** 一张表的抽样结果。采样出错时保留静态候选项供排查。 */
-    public record Entry(int runs, List<Drop> drops, boolean samplingFailed) {}
+    public record Entry(int runs, List<Drop> drops, boolean samplingFailed) {
+        /** 只在静态结构里发现、采样未命中的候选数 */
+        int unobserved() {
+            return (int) drops.stream().filter(drop -> drop.chance() <= 0.0).count();
+        }
+    }
+
+    /** 深度搜索进度：已采样次数 / 目标次数 */
+    public record DeepProgress(int runs, int target) {}
 
     record Status(int ready, int failed, int restored, int urgent, int prefetch,
                   int busyTicks, long busyNanos, int skippedTicks, long peakTickNanos, String peakKey) {}
@@ -89,6 +99,8 @@ public final class LootIndex {
     private final Map<Key, BlockPos> origins = new HashMap<>();           // 模拟时使用的箱子位置
     private final Map<Key, Work> working = new HashMap<>();               // 插队时保留原任务的样本
     private final Map<Key, Entry> results = new HashMap<>();              // 含失败结果；成功的同时写进 data
+    private final Map<Key, Integer> deepTargets = new HashMap<>();        // 深度搜索中的表 → 目标采样次数
+    private final Map<Key, Work> retained = new HashMap<>();              // 深度搜索完成后保留的样本，再次深度搜索时接着加（不存盘）
     private final int restored;   // 进入存档时从磁盘恢复、核对通过的条目数
     private int failed;
     private int busyTicks;        // 实际推进过模拟的 tick 数
@@ -145,6 +157,45 @@ public final class LootIndex {
         return cached;
     }
 
+    /**
+     * 有结果且没到上限就能深度搜索（客户端按钮用同一条规则）。
+     * 不看「未命中候选」数：GLM、脚本在代码里加的物品静态解析看不到，候选数为 0 不代表已经搜全。
+     */
+    public static boolean canDeepen(int runs) {
+        return runs > 0 && runs < DEEP_MAX_RUNS;
+    }
+
+    /**
+     * 深度搜索：在已有结果上再采样 {@link #DEEP_STEP_RUNS} 次，插到队首。
+     * 本次运行里深度搜索过的表接着上次的样本加；其他情况（含读档恢复的结果）从头采到目标次数。
+     *
+     * @return 是否开始了新的深度搜索
+     */
+    public boolean deepen(ServerLevel level, ResourceLocation table, BlockPos origin) {
+        Key key = new Key(level.dimension(), table);
+        Entry entry = results.get(key);
+        if (entry == null || entry.samplingFailed() || deepTargets.containsKey(key)
+                || !canDeepen(entry.runs())) return false;
+        deepTargets.put(key, Math.min(entry.runs() + DEEP_STEP_RUNS, DEEP_MAX_RUNS));
+        Work kept = retained.remove(key);
+        if (kept != null) working.put(key, kept);
+        prefetch.remove(key);
+        urgent.remove(key);
+        urgent.addFirst(key);
+        origins.putIfAbsent(key, origin.immutable());
+        return true;
+    }
+
+    /** 深度搜索进度；这张表没在深度搜索时为空 */
+    @Nullable
+    DeepProgress deepProgress(ResourceKey<Level> dimension, ResourceLocation table) {
+        Key key = new Key(dimension, table);
+        Integer target = deepTargets.get(key);
+        if (target == null) return null;
+        Work work = working.get(key); // 还没轮到时没有任务，进度按 0 算
+        return new DeepProgress(work == null ? 0 : work.sampling().runs(), target);
+    }
+
     /** 区块里发现的容器：没缓存、没排队才放到预取队尾 */
     private void prefetch(ServerLevel level, ResourceLocation table, BlockPos origin) {
         Key key = new Key(level.dimension(), table);
@@ -160,6 +211,8 @@ public final class LootIndex {
         prefetch.clear();
         origins.clear();
         working.clear();
+        deepTargets.clear();
+        retained.clear();
         failed = 0;
         rescanAroundPlayers();
     }
@@ -344,14 +397,28 @@ public final class LootIndex {
         Work work = null;
         try {
             work = working.computeIfAbsent(key, this::start);
-            if (!work.sampling().advance(TARGET_RUNS, tickStart, TICK_BUDGET_NANOS)) return false;
+            int targetRuns = deepTargets.getOrDefault(key, TARGET_RUNS); // 深度搜索时采到更高的目标
+            if (!work.sampling().advance(targetRuns, tickStart, TICK_BUDGET_NANOS)) return false;
             LootSimulator.Result result = work.sampling().result(key.table());
             List<Drop> drops = mergeStaticAndDynamic(result, work.staticEstimate());
             Entry entry = new Entry(result.runs(), List.copyOf(drops), false);
             results.put(key, entry);
             data.entries.put(key, new LootIndexData.Stored(entry, tableHash(key.table())));
             data.setDirty();
+            if (deepTargets.remove(key) != null) {
+                retained.put(key, work); // 留着样本，下次深度搜索接着加
+                LootWorks.LOGGER.info("深度搜索完成：{} @ {}，共 {} 次，未命中候选 {} 种", key.table(),
+                        key.dimension().location(), entry.runs(), entry.unobserved());
+            }
         } catch (RuntimeException exception) {
+            if (deepTargets.remove(key) != null && results.containsKey(key)) {
+                // 深度搜索出错时保留原来的结果，不把已有的检测结果变成失败
+                LootWorks.LOGGER.warn("深度搜索失败，保留原结果：{}", key.table(), exception);
+                urgent.remove(key);
+                working.remove(key);
+                origins.remove(key);
+                return true;
+            }
             // 单个模组的条件或修改器可能拒绝无玩家环境，记录失败后继续建其他表；失败结果不存盘，下次进存档重试。
             LootWorks.LOGGER.warn("战利品索引无法采样 {}", key.table(), exception);
             List<Drop> candidates = work == null ? List.of()
