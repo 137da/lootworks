@@ -12,4 +12,9 @@ public final class ChestDetectorClientPackets {
         var player = Minecraft.getInstance().player;
         if (player != null && player.containerMenu instanceof ChestDetectorMenu menu) menu.receive(payload);
     }
+
+    public static void receiveProgress(ChestDetectorResultPayload.DeepSearchProgress payload) {
+        var player = Minecraft.getInstance().player;
+        if (player != null && player.containerMenu instanceof ChestDetectorMenu menu) menu.receiveProgress(payload);
+    }
 }

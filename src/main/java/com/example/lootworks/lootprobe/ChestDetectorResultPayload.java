@@ -36,6 +36,19 @@ public record ChestDetectorResultPayload(int containerId, int runs, List<Drop> d
         }
     }
 
+    /** 深度搜索进度；target 为 0 表示已结束（或被拒绝），客户端清掉进度显示。 */
+    public record DeepSearchProgress(int containerId, int runs, int target) {
+        private static void encode(DeepSearchProgress packet, FriendlyByteBuf buffer) {
+            buffer.writeVarInt(packet.containerId());
+            buffer.writeVarInt(packet.runs());
+            buffer.writeVarInt(packet.target());
+        }
+
+        private static DeepSearchProgress decode(FriendlyByteBuf buffer) {
+            return new DeepSearchProgress(buffer.readVarInt(), buffer.readVarInt(), buffer.readVarInt());
+        }
+    }
+
     /** 原版按钮序号只有一个有符号字节；改命菜单用 VarInt 传完整的目标下标。 */
     private record MenuAction(int containerId, int buttonId) {
         static void encode(MenuAction action, FriendlyByteBuf buffer) {
@@ -48,7 +61,7 @@ public record ChestDetectorResultPayload(int containerId, int runs, List<Drop> d
         }
     }
 
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3"; // 3：新增深度搜索进度包
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(LootWorks.MOD_ID, "loot_probe"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
@@ -78,6 +91,11 @@ public record ChestDetectorResultPayload(int containerId, int runs, List<Drop> d
                 .encoder(FateHighlightPayload::encode)
                 .decoder(FateHighlightPayload::decode)
                 .consumerMainThread((payload, context) -> FateHighlightPayload.receive(payload))
+                .add();
+        CHANNEL.messageBuilder(DeepSearchProgress.class, 4, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(DeepSearchProgress::encode)
+                .decoder(DeepSearchProgress::decode)
+                .consumerMainThread((payload, context) -> ChestDetectorClientPackets.receiveProgress(payload))
                 .add();
     }
 

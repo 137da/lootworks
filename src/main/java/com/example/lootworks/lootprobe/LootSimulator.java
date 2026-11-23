@@ -131,6 +131,11 @@ public final class LootSimulator {
             this.separateWater = separateWater;
         }
 
+        /** 已完成的模拟次数（深度搜索进度用） */
+        int runs() {
+            return runs;
+        }
+
         boolean advance(int targetRuns, long tickStart, long budgetNanos) {
             long start = System.nanoTime();
             while (runs < targetRuns && System.nanoTime() - tickStart < budgetNanos) {
